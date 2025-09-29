@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111111"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <title>Quiz de verbos irregulares (36 fijos)</title>
+  <style>
+    :root{--gap:14px;--radius:14px;--shadow:0 6px 24px rgba(0,0,0,.08)}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;margin:0;background:#f7f7fb;color:#222}
+    header{padding:20px 16px;background:#111;color:#fff;position:sticky;top:0;z-index:2}
+    header h1{margin:0;font-size:20px}
+    .app{max-width:900px;margin:24px auto;padding:0 16px 80px}
+    .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:var(--gap)}
+    .row{display:flex;gap:var(--gap);flex-wrap:wrap}
+    .row>*{flex:1 1 240px}
+    input[type="text"], select{width:100%;padding:12px 14px;border:1px solid #e6e6ef;border-radius:10px;background:#fff;font-size:16px}
+    button{border:0;padding:12px 16px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow);background:#1f6feb;color:white;font-weight:600}
+    button.secondary{background:#eee;color:#111}
+    button.ghost{background:transparent;box-shadow:none;border:1px solid #ddd;color:#333}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .muted{color:#666}
+    .badge{display:inline-block;background:#eef6ff;color:#174ea6;padding:2px 8px;border-radius:999px;font-size:12px;margin-left:8px}
+    .stat{background:#0f172a;color:#fff;padding:10px 12px;border-radius:10px;font-size:14px}
+    .success{color:#0a7a2f}
+    .error{color:#b00020}
+    .pill{padding:6px 10px;border-radius:999px;background:#f1f1f7;color:#333;font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--gap)}
+    .kbd{background:#111;color:#fff;border-radius:6px;padding:1px 6px;font-size:12px}
+    .small{font-size:13px}
+    .footer{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);border-top:1px solid #eee;padding:10px 16px}
+    .footer .row{align-items:center}
+    .hl{background:#fff7cc;border-radius:6px;padding:2px 6px}
+    .flex{display:flex;gap:10px;align-items:center}
+    .space{flex:1}
+    .hidden{display:none}
+    .results pre{white-space:pre-wrap;background:#0b1020;color:#d6e4ff;padding:12px;border-radius:12px;overflow:auto}
+    .install-banner{position:fixed;bottom:80px;right:16px;left:16px;background:#fff;border:1px solid #eee;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.12);display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Quiz de verbos irregulares <span class="badge">36 fijos</span></h1>
+  </header>
+
+  <div class="app">
+    <div class="card" id="intro">
+      <p>
+        App cerrada a <b>tus 36 verbos</b> (desde tu Excel). Puedes practicar <b>los 18 primeros</b>, <b>los 18 últimos</b> o <b>todos</b>.
+        Acepta variantes (p.ej. <code>was were</code>, <code>was/were</code>, <code>burned/burnt</code>, etc.; separadas por espacio, barra, coma, punto y coma, barra vertical o invertida).
+      </p>
+    </div>
+
+    <div class="card" id="config">
+      <h3>Configuración</h3>
+      <div class="row">
+        <div>
+          <label class="small">Conjunto</label>
+          <select id="preset">
+            <option value="first18">Primeros 18</option>
+            <option value="last18">Últimos 18</option>
+            <option value="full36" selected>Todos (36)</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">Orden</label>
+          <select id="order">
+            <option value="sequential">Secuencial</option>
+            <option value="random">Aleatorio</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">Criterio</label>
+          <select id="sensitivity">
+            <option value="loose">Flexible (recomendada)</option>
+            <option value="strict">Estricto (exacto)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="quiz" style="display:none">
+      <div class="row" style="align-items:center">
+        <div class="stat" id="statLeft">Pendientes: 0</div>
+        <div class="stat" id="statRound">Ronda: 1</div>
+        <div class="stat" id="statScore">Aciertos: 0</div>
+        <div class="space"></div>
+        <button class="ghost" id="btnReset">Reiniciar todo</button>
+      </div>
+      <hr/>
+      <div class="row">
+        <div>
+          <div class="muted small">Verbo (ES)</div>
+          <h2 id="spanish">—</h2>
+        </div>
+        <div class="space"></div>
+        <div class="small muted">Pulsa <span class="kbd">Enter</span> para comprobar</div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label class="small">Infinitivo (EN)</label>
+          <input id="infi" type="text" autocomplete="off" />
+        </div>
+        <div>
+          <label class="small">Pasado simple (EN)</label>
+          <input id="past" type="text" autocomplete="off" />
+        </div>
+        <div>
+          <label class="small">Participio (EN)</label>
+          <input id="part" type="text" autocomplete="off" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnCheck">Comprobar</button>
+        <button class="secondary" id="btnSkip">Saltar (contará como fallo)</button>
+        <button class="ghost" id="btnShow">Mostrar solución</button>
+      </div>
+      <div id="feedback" class="small" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card results hidden" id="summary">
+      <h3>🎉 ¡Todo correcto!</h3>
+      <p>Has completado todos los verbos. A continuación verás un resumen de tu sesión.</p>
+      <div id="summaryStats" class="grid"></div>
+      <details style="margin-top:10px">
+        <summary>Exportar resultados</summary>
+        <pre id="summaryDump"></pre>
+      </details>
+      <div class="row">
+        <button id="btnStartOver">Empezar de nuevo</button>
+      </div>
+    </div>
+
+    <div class="install-banner" id="installBanner">
+      <div class="row">
+        <div class="small">¿Instalar esta app?</div>
+        <div class="space"></div>
+        <button id="btnInstall">Instalar</button>
+        <button class="ghost" id="btnDismiss">Ahora no</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="row">
+        <div class="flex small">
+          <span>⚙️</span><span>Elige conjunto y pulsa</span>
+        </div>
+        <div class="space"></div>
+        <button id="btnStart">Iniciar práctica</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const el = id => document.getElementById(id);
+    const state = {
+      round: 1, score: 0, asked: 0,
+      pool: [], review: [], history: [], current: null,
+      options:{order:'sequential', strict:false},
+    };
+
+    const defaults = {
+      first18: `ser/estar;be;was / were;been
+llegar a ser;become;became;become
+empezar;begin;began;begun
+romper;break;broke;broken
+construir;build;built;built
+quemar;burn;burnt / burned;burnt / burned
+comprar;buy;bought;bought
+coger;catch;caught;caught
+elegir;choose;chose;chosen
+venir;come;came;come
+costar;cost;cost;cost
+cortar;cut;cut;cut
+hacer;do;did;done
+dibujar;draw;drew;drawn
+soñar;dream;dreamt / dreamed;dreamt / dreamed
+beber;drink;drank;drunk
+conducir;drive;drove;driven
+comer;eat;ate;eaten`,
+      last18: `caer;fall;fell;fallen
+sentir;feel;felt;felt
+encontrar;find;found;found
+volar;fly;flew;flown
+olvidar;forget;forgot;forgotten
+obtener;get;got;got / gotten
+dar;give;gave;given
+ir;go;went;been / gone
+crecer;grow;grew;grown
+tener;have;had;had
+escuchar;hear;heard;heard
+golpear;hit;hit;hit
+herir;hurt;hurt;hurt
+guardar/mantener;keep;kept;kept
+saber;know;knew;known
+aprender;learn;learnt / learned;learnt / learned
+dejar/partir;leave;left;left
+dejar/permitir;let;let;let`,
+      full36: `ser/estar;be;was / were;been
+llegar a ser;become;became;become
+empezar;begin;began;begun
+romper;break;broke;broken
+construir;build;built;built
+quemar;burn;burnt / burned;burnt / burned
+comprar;buy;bought;bought
+coger;catch;caught;caught
+elegir;choose;chose;chosen
+venir;come;came;come
+costar;cost;cost;cost
+cortar;cut;cut;cut
+hacer;do;did;done
+dibujar;draw;drew;drawn
+soñar;dream;dreamt / dreamed;dreamt / dreamed
+beber;drink;drank;drunk
+conducir;drive;drove;driven
+comer;eat;ate;eaten
+caer;fall;fell;fallen
+sentir;feel;felt;felt
+encontrar;find;found;found
+volar;fly;flew;flown
+olvidar;forget;forgot;forgotten
+obtener;get;got;got / gotten
+dar;give;gave;given
+ir;go;went;been / gone
+crecer;grow;grew;grown
+tener;have;had;had
+escuchar;hear;heard;heard
+golpear;hit;hit;hit
+herir;hurt;hurt;hurt
+guardar/mantener;keep;kept;kept
+saber;know;knew;known
+aprender;learn;learnt / learned;learnt / learned
+dejar/partir;leave;left;left
+dejar/permitir;let;let;let`
+    };
+
+    function parseCSV(text){
+      return text.split(/\n+/).map(line=>line.trim()).filter(Boolean).map(line=>{
+        const [es,en1,en2,en3] = line.split(';').map(s=> (s||'').trim());
+        return {es, forms:[en1,en2,en3]};
+      });
+    }
+
+    function normalize(s){ return (s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+
+    function tokenize(answer){
+      // Acepta: espacios, barras /, barra invertida \, coma, punto y coma, barra vertical |
+      return normalize(answer).split(/[\s,;\|\\/]+/).filter(Boolean);
+    }
+
+    function matchesFlexible(answer, expected){
+      const expAlts = expected.split('/').map(x=> normalize(x));
+      const userTokens = tokenize(answer);
+      // válido si alguno de los tokens del usuario coincide con alguna alternativa
+      return userTokens.some(tok => expAlts.includes(tok));
+    }
+
+    function matches(answer, expected, strict){
+      if(strict) {
+        const opts = (expected||'').split('/').map(x=> x.trim());
+        return opts.includes(answer.trim());
+      }
+      return matchesFlexible(answer, expected);
+    }
+
+    function loadPreset(){
+      const preset = el('preset').value;
+      const txt = defaults[preset] || defaults.full36;
+      return parseCSV(txt);
+    }
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]]=[arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function save(){
+      localStorage.setItem('verbsQuiz36_state', JSON.stringify({
+        round: state.round, score: state.score, asked: state.asked,
+        pool: state.pool, review: state.review, history: state.history,
+        current: state.current, options: state.options,
+        preset: el('preset').value
+      }));
+    }
+
+    function load(){
+      const raw = localStorage.getItem('verbsQuiz36_state');
+      if(!raw) return false;
+      try{ Object.assign(state, JSON.parse(raw)); return true; }catch{ return false; }
+    }
+
+    function resetAll(){
+      state.round=1; state.score=0; state.asked=0; state.history=[]; state.review=[]; state.current=null;
+      const data = loadPreset();
+      state.pool = data.map(v=>({es:v.es, forms:v.forms, tries:0, correct:false}));
+      if(el('order').value==='random') shuffle(state.pool);
+      state.options.order = el('order').value;
+      state.options.strict = (el('sensitivity').value==='strict');
+      save(); updateStats(); el('quiz').style.display='block';
+      el('summary').classList.add('hidden'); nextItem();
+    }
+
+    function updateStats(){
+      el('statLeft').textContent = `Pendientes: ${state.pool.length}`;
+      el('statRound').textContent = `Ronda: ${state.round}`;
+      el('statScore').textContent = `Aciertos: ${state.score}`;
+    }
+
+    function setInputs(v=''){ el('infi').value=v; el('past').value=v; el('part').value=v; el('infi').focus(); }
+
+    function nextItem(){
+      el('feedback').innerHTML='';
+      if(state.pool.length===0){
+        if(state.review.length>0){ state.pool = state.review; state.review = []; state.round++; updateStats(); }
+        else { showSummary(); save(); return; }
+      }
+      state.current = state.pool.shift();
+      el('spanish').textContent = state.current.es;
+      setInputs(''); updateStats(); save();
+    }
+
+    function check(showSolution=false){
+      if(!state.current) return;
+      const infi = el('infi').value; const past = el('past').value; const part = el('part').value;
+      const strict = state.options.strict;
+
+      const ok1 = matches(infi, state.current.forms[0], strict);
+      const ok2 = matches(past, state.current.forms[1], strict);
+      const ok3 = matches(part, state.current.forms[2], strict);
+
+      const allOk = ok1 && ok2 && ok3;
+      const record = { es: state.current.es, expected: state.current.forms, answer:[infi,past,part], correct: allOk, round: state.round, ts: Date.now() };
+      state.history.push(record);
+
+      let fb = '';
+      if(allOk){ state.score++; fb = `<span class="success">✔ Correcto</span>`; }
+      else {
+        const sol = state.current.forms.join(' — ');
+        fb = `<span class="error">✘ Alguna forma no coincide.</span> ` + (showSolution? `<div class="small">Solución: <span class="hl">${sol}</span></div>`: '');
+        state.current.tries++; state.review.push(state.current);
+      }
+      state.asked++; el('feedback').innerHTML = fb; save();
+      if(allOk) setTimeout(nextItem, 350);
+    }
+
+    function showSummary(){
+      el('quiz').style.display='none';
+      el('summary').classList.remove('hidden');
+      const unique = [...new Set(state.history.map(h=>h.es))];
+      const tries = unique.map(es=>({es, intentos: state.history.filter(h=>h.es===es).length}));
+      const worst = [...tries].sort((a,b)=>b.intentos-a.intentos).slice(0,5);
+      const stats = [
+        `<div class="card"><b>Total aciertos:</b> ${state.score}</div>`,
+        `<div class="card"><b>Rondas:</b> ${state.round}</div>`,
+        `<div class="card"><b>Preguntas respondidas:</b> ${state.asked}</div>`,
+      ].join('');
+      document.getElementById('summaryStats').innerHTML = stats + (worst.length? `<div class="card"><b>Más costosos:</b><br>${worst.map(x=>`• ${x.es} (${x.intentos} intentos)`).join('<br>')}</div>`:'');
+      document.getElementById('summaryDump').textContent = JSON.stringify({
+        finishedAt: new Date().toISOString(),
+        rounds: state.round,
+        answered: state.asked,
+        score: state.score,
+        history: state.history
+      }, null, 2);
+    }
+
+    document.getElementById('btnStart').addEventListener('click', ()=>{ resetAll(); document.querySelector('.footer').classList.add('hidden'); });
+    document.getElementById('btnReset').addEventListener('click', ()=>{ if(confirm('Reiniciar borra el progreso guardado. ¿Continuar?')){ localStorage.removeItem('verbsQuiz36_state'); resetAll(); } });
+    document.getElementById('btnStartOver').addEventListener('click', ()=>{ localStorage.removeItem('verbsQuiz36_state'); document.querySelector('.footer').classList.remove('hidden'); document.getElementById('summary').classList.add('hidden'); document.getElementById('quiz').style.display='none'; window.scrollTo({top:0, behavior:'smooth'}); });
+    document.getElementById('btnCheck').addEventListener('click', ()=> check(false));
+    document.getElementById('btnShow').addEventListener('click', ()=> check(true));
+    document.getElementById('btnSkip').addEventListener('click', ()=>{ const record = { es: state.current.es, expected: state.current.forms, answer:["(skip)","(skip)","(skip)"], correct:false, round: state.round, ts: Date.now() }; state.history.push(record); state.current.tries++; state.review.push(state.current); state.asked++; save(); nextItem(); });
+
+    if('serviceWorker' in navigator){ window.addEventListener('load', () => { navigator.serviceWorker.register('service-worker.js'); }); }
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt = e; const bar = document.getElementById('installBanner'); bar.style.display = 'block'; document.getElementById('btnInstall').onclick = async () => { bar.style.display = 'none'; if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; } }; document.getElementById('btnDismiss').onclick = () => { bar.style.display = 'none'; }; });
+  })();
+  </script>
+</body>
+</html>
